@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Gas Relayer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196F3 0%, #21CBF3 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .form-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff30;
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .logs-section {
+            background: #1a1a1a;
+            color: #00ff00;
+            border-radius: 15px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .logs-section h2 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-left: 3px solid #00ff00;
+            background: rgba(0, 255, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        .log-entry.error {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.05);
+            color: #ff6b6b;
+        }
+
+        .log-entry.success {
+            border-left-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+            color: #00ff88;
+        }
+
+        .timestamp {
+            color: #888;
+            font-size: 11px;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-dot.online {
+            background: #4CAF50;
+        }
+
+        .status-dot.offline {
+            background: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Base Gas Relayer</h1>
+            <p>Submit pre-signed transactions and let us handle the gas fees</p>
+        </div>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/>
+                    </svg>
+                    Submit Transaction
+                </h2>
+                
+                <div class="input-group">
+                    <label for="transactionType">Transaction Type</label>
+                    <select id="transactionType">
+                        <option value="eth_transfer">ETH Transfer</option>
+                        <option value="erc20_transfer">ERC-20 Transfer</option>
+                        <option value="erc20_approve">ERC-20 Approve</option>
+                        <option value="eip7702_delegation">EIP-7702 Delegation</option>
+                        <option value="contract_interaction">Contract Interaction</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="signedTransaction">Pre-signed Transaction</label>
+                    <textarea 
+                        id="signedTransaction" 
+                        placeholder="Paste your pre-signed transaction hex here (e.g., 0x02f8b1...)"
+                        rows="6"
+                    ></textarea>
+                </div>
+
+                <button class="submit-btn" onclick="submitTransaction()">
+                    <span class="btn-text">Submit Transaction</span>
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </button>
+            </div>
+
+            <div class="form-section">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 3h18v2H3V3zm0 4h18v2H3V7zm0 4h12v2H3v-2zm0 4h18v2H3v-2zm0 4h12v2H3v-2z"/>
+                    </svg>
+                    Transaction Logs
+                </h2>
+                <div class="logs-section" id="logsContainer">
+                    <div class="log-entry">
+                        <span class="timestamp">[Ready]</span> Gas relayer initialized and ready to process transactions
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot online"></div>
+                <span>Base Mainnet Connected</span>
+            </div>
+            <div class="status-item">
+                <span>Relayer: 0x38d7...1a31</span>
+            </div>
+            <div class="status-item">
+                <span id="currentTime"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Add log entry
+        function addLog(message, type = 'info') {
+            const logsContainer = document.getElementById('logsContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Submit transaction
+        async function submitTransaction() {
+            const signedTx = document.getElementById('signedTransaction').value.trim();
+            const txType = document.getElementById('transactionType').value;
+            const submitBtn = document.querySelector('.submit-btn');
+            const btnText = document.querySelector('.btn-text');
+            const loading = document.querySelector('.loading');
+
+            if (!signedTx) {
+                addLog('❌ Error: Please provide a signed transaction', 'error');
+                return;
+            }
+
+            if (!signedTx.startsWith('0x')) {
+                addLog('❌ Error: Transaction must start with 0x', 'error');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            btnText.style.opacity = '0';
+            loading.style.display = 'block';
+
+            addLog(`🔄 Submitting ${txType} transaction to Base mainnet...`);
+
+            try {
+                const response = await fetch('/api/relay', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        signedTransaction: signedTx,
+                        transactionType: txType
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    addLog(`✅ Transaction successful!`, 'success');
+                    addLog(`🔗 Hash: ${result.transactionHash}`, 'success');
+                    addLog(`⛽ Gas Used: ${result.gasUsed} (${result.gasPaidEth} ETH)`, 'success');
+                    addLog(`📦 Block: ${result.blockNumber}`, 'success');
+                    addLog(`👤 Original Signer: ${result.originalSigner}`, 'success');
+                    addLog(`🔄 Relayer: ${result.relayerAddress}`, 'success');
+                    
+                    // Clear the form
+                    document.getElementById('signedTransaction').value = '';
+                } else {
+                    addLog(`❌ Transaction failed: ${result.error}`, 'error');
+                    if (result.details) {
+                        addLog(`🔍 Details: ${result.details}`, 'error');
+                    }
+                }
+
+            } catch (error) {
+                addLog(`❌ Network error: ${error.message}`, 'error');
+                console.error('Submit error:', error);
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                btnText.style.opacity = '1';
+                loading.style.display = 'none';
+            }
+        }
+
+        // Handle Enter key in textarea
+        document.getElementById('signedTransaction').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                submitTransaction();
+            }
+        });
+
+        // Auto-detect transaction type
+        document.getElementById('signedTransaction').addEventListener('input', function(e) {
+            const tx = e.target.value.trim();
+            if (tx.length > 10) {
+                // Basic detection logic could be added here
+                addLog(`📝 Transaction input detected (${tx.length} chars)`);
+            }
+        });
+
+        // Initial log
+        addLog('🚀 Base Gas Relayer interface loaded successfully');
+    </script>
+</body>
+</html>

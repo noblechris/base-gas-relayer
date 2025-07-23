@@ -1,0 +1,21 @@
+
+{
+  "name": "base-gas-relayer",
+  "version": "1.0.0",
+  "description": "Gas relayer service for Base mainnet",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "ethers": "^6.8.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
