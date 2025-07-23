@@ -1,15 +1,21 @@
 // api/relay.js - Vercel serverless function
-import { ethers } from 'ethers';
+const { ethers } = require('ethers');
 
 // Base mainnet configuration
-const BASE_RPC_URL = 'https://mainnet.base.org';
-const RELAYER_PRIVATE_KEY = '0x38d7d9219128b21a44aa53a6d538b92d16ee1dc87c660feb2bd2f4cd57891a31';
+const BASE_RPC_URL = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
+const RELAYER_PRIVATE_KEY = process.env.RELAYER_PRIVATE_KEY || '0x38d7d9219128b21a44aa53a6d538b92d16ee1dc87c660feb2bd2f4cd57891a31';
 
 // Initialize provider and wallet
-const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
-const relayerWallet = new ethers.Wallet(RELAYER_PRIVATE_KEY, provider);
+let provider, relayerWallet;
 
-export default async function handler(req, res) {
+try {
+  provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
+  relayerWallet = new ethers.Wallet(RELAYER_PRIVATE_KEY, provider);
+} catch (error) {
+  console.error('Failed to initialize provider/wallet:', error);
+}
+
+module.exports = async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -111,7 +117,7 @@ export default async function handler(req, res) {
       status: receipt.status === 1 ? 'Success' : 'Failed',
       relayerAddress: relayerWallet.address,
       originalSigner: parsedTx.from,
-      transactionType: transactionType || 'unknown',
+      transactionType: transactionType || detectTransactionType(parsedTx.data),
       timestamp: new Date().toISOString()
     };
 
@@ -126,7 +132,7 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString()
     });
   }
-}
+};
 
 // Helper function to detect transaction type
 function detectTransactionType(data) {
